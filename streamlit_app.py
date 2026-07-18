@@ -1,182 +1,63 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# ===============================
-# Konfigurasi Halaman
-# ===============================
-st.set_page_config(
-    page_title="HR Analytics Dashboard",
-    page_icon="📊",
-    layout="wide"
-)
-
+st.set_page_config(page_title="HR Analytics Dashboard",page_icon="📊",layout="wide")
 st.title("📊 HR Analytics Dashboard")
-st.markdown("### Dashboard Intelijen Bisnis")
+st.caption("Dashboard Intelijen Bisnis")
 
-# ===============================
-# Load Data
-# ===============================
 @st.cache_data
 def load_data():
-    df = pd.read_csv("cleaned_HR_Analytics.csv")
-    return df
+    return pd.read_csv("cleaned_HR_Analytics.csv")
 
-df = load_data()
+df=load_data()
 
-st.success("Dataset berhasil dimuat.")
+maps={
+"Attrition":{0:"No",1:"Yes"},
+"Gender":{0:"Female",1:"Male"},
+"Department":{1:"Human Resources",2:"Research & Development",3:"Sales"},
+"OverTime":{0:"No",1:"Yes"}
+}
+for c,m in maps.items():
+    if c in df.columns:
+        df[c]=df[c].map(m).fillna(df[c])
 
-st.write(df.head())
-# ===============================
-# Sidebar
-# ===============================
+st.sidebar.header("Filter")
+dept=st.sidebar.multiselect("Department",sorted(df["Department"].dropna().unique()),default=sorted(df["Department"].dropna().unique()))
+gen=st.sidebar.multiselect("Gender",sorted(df["Gender"].dropna().unique()),default=sorted(df["Gender"].dropna().unique()))
+att=st.sidebar.multiselect("Attrition",sorted(df["Attrition"].dropna().unique()),default=sorted(df["Attrition"].dropna().unique()))
+f=df[df.Department.isin(dept)&df.Gender.isin(gen)&df.Attrition.isin(att)]
 
-st.sidebar.header("Filter Dashboard")
+c1,c2,c3,c4=st.columns(4)
+c1.metric("Employees",len(f))
+c2.metric("Avg Age",round(f.Age.mean(),1))
+c3.metric("Avg Salary",f"${f.MonthlyIncome.mean():,.0f}")
+c4.metric("Attrition %",f"{(f.Attrition.eq('Yes').mean()*100):.1f}%")
 
-department = st.sidebar.multiselect(
-    "Department",
-    options=df["Department"].unique(),
-    default=df["Department"].unique()
-)
+st.divider()
+a,b=st.columns(2)
+with a:
+    st.plotly_chart(px.pie(f,names="Attrition",title="Attrition",hole=.45),use_container_width=True)
+with b:
+    d=f.Department.value_counts().reset_index()
+    d.columns=["Department","Employee"]
+    st.plotly_chart(px.bar(d,x="Department",y="Employee",color="Department",text="Employee",title="Department"),use_container_width=True)
 
-gender = st.sidebar.multiselect(
-    "Gender",
-    options=df["Gender"].unique(),
-    default=df["Gender"].unique()
-)
+c,d=st.columns(2)
+with c:
+    g=f.Gender.value_counts().reset_index()
+    g.columns=["Gender","Employee"]
+    st.plotly_chart(px.pie(g,names="Gender",values="Employee",hole=.4,title="Gender"),use_container_width=True)
+with d:
+    st.plotly_chart(px.histogram(f,x="Age",color="Gender",nbins=20,title="Age Distribution"),use_container_width=True)
 
-attrition = st.sidebar.multiselect(
-    "Attrition",
-    options=df["Attrition"].unique(),
-    default=df["Attrition"].unique()
-)
+e,h=st.columns(2)
+with e:
+    st.plotly_chart(px.box(f,x="Department",y="MonthlyIncome",color="Department",title="Salary by Department"),use_container_width=True)
+with h:
+    st.plotly_chart(px.scatter(f,x="Age",y="MonthlyIncome",color="Department",hover_data=["JobRole"],title="Age vs Income"),use_container_width=True)
 
-filtered_df = df[
-    (df["Department"].isin(department)) &
-    (df["Gender"].isin(gender)) &
-    (df["Attrition"].isin(attrition))
-]
-
-st.markdown("---")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric(
-        "Total Employee",
-        len(filtered_df)
-    )
-
-with col2:
-    st.metric(
-        "Average Age",
-        round(filtered_df["Age"].mean(),1)
-    )
-
-with col3:
-    st.metric(
-        "Average Salary",
-        f"${filtered_df['MonthlyIncome'].mean():,.0f}"
-    )
-
-with col4:
-    attrition_rate = (
-        filtered_df["Attrition"]
-        .value_counts(normalize=True)
-        .get("Yes",0)*100
-    )
-
-    st.metric(
-        "Attrition Rate",
-        f"{attrition_rate:.1f}%"
-    )
-    
-st.markdown("## Employee Attrition")
-
-fig = px.pie(
-    filtered_df,
-    names="Attrition",
-    hole=0.5,
-    color_discrete_sequence=px.colors.qualitative.Set2
-)
-
-st.plotly_chart(fig,use_container_width=True)
-# ==========================================
-# Department Analysis
-# ==========================================
-
-st.markdown("---")
-st.subheader("📂 Department Analysis")
-
-col1, col2 = st.columns(2)
-
-with col1:
-
-    department_count = (
-        filtered_df["Department"]
-        .value_counts()
-        .reset_index()
-    )
-
-    department_count.columns = [
-        "Department",
-        "Employee"
-    ]
-
-    fig = px.bar(
-        department_count,
-        x="Department",
-        y="Employee",
-        color="Department",
-        text="Employee",
-        title="Employee by Department"
-    )
-
-    fig.update_traces(textposition="outside")
-
-st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-    with col2:
-
-    gender_count = (
-        filtered_df["Gender"]
-        .value_counts()
-        .reset_index()
-    )
-
-    gender_count.columns = [
-        "Gender",
-        "Employee"
-    ]
-
-    fig = px.pie(
-        gender_count,
-        names="Gender",
-        values="Employee",
-        hole=0.45,
-        title="Gender Distribution"
-    )
-
-st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
-st.markdown("---")
-
-st.subheader("🎂 Age Distribution")
-
-fig = px.histogram(
-    filtered_df,
-    x="Age",
-    nbins=20,
-    color="Gender",
-    title="Employee Age Distribution"
-)
-
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
+st.subheader("Data")
+st.dataframe(f,use_container_width=True)
+st.download_button("Download Filtered CSV",f.to_csv(index=False),"filtered_hr.csv","text/csv")
