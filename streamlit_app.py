@@ -89,7 +89,8 @@ with col4:
         "Attrition Rate",
         f"{attrition_rate:.1f}%"
     )
-  st.markdown("## Employee Attrition")
+    
+st.markdown("## Employee Attrition")
 
 fig = px.pie(
     filtered_df,
