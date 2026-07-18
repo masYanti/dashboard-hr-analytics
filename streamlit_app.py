@@ -56,6 +56,7 @@ filtered_df = df[
     (df["Gender"].isin(gender)) &
     (df["Attrition"].isin(attrition))
 ]
+
 st.markdown("---")
 
 col1, col2, col3, col4 = st.columns(4)
@@ -133,7 +134,7 @@ with col1:
 
     fig.update_traces(textposition="outside")
 
-    st.plotly_chart(
+st.plotly_chart(
         fig,
         use_container_width=True
     )
@@ -158,11 +159,12 @@ with col1:
         title="Gender Distribution"
     )
 
-    st.plotly_chart(
+st.plotly_chart(
         fig,
         use_container_width=True
     )
-    st.markdown("---")
+
+st.markdown("---")
 
 st.subheader("🎂 Age Distribution")
 
