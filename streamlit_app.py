@@ -11,7 +11,10 @@ st.caption("Dashboard Intelijen Bisnis")
 def load_data():
     return pd.read_csv("cleaned_HR_Analytics.csv")
 
-df=load_data()
+df = load_data()
+
+st.write(df.columns)
+st.write(df.head())
 
 maps={
 "Attrition":{0:"No",1:"Yes"},
