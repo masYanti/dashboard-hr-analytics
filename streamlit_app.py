@@ -99,3 +99,81 @@ fig = px.pie(
 )
 
 st.plotly_chart(fig,use_container_width=True)
+# ==========================================
+# Department Analysis
+# ==========================================
+
+st.markdown("---")
+st.subheader("📂 Department Analysis")
+
+col1, col2 = st.columns(2)
+
+with col1:
+
+    department_count = (
+        filtered_df["Department"]
+        .value_counts()
+        .reset_index()
+    )
+
+    department_count.columns = [
+        "Department",
+        "Employee"
+    ]
+
+    fig = px.bar(
+        department_count,
+        x="Department",
+        y="Employee",
+        color="Department",
+        text="Employee",
+        title="Employee by Department"
+    )
+
+    fig.update_traces(textposition="outside")
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+    with col2:
+
+    gender_count = (
+        filtered_df["Gender"]
+        .value_counts()
+        .reset_index()
+    )
+
+    gender_count.columns = [
+        "Gender",
+        "Employee"
+    ]
+
+    fig = px.pie(
+        gender_count,
+        names="Gender",
+        values="Employee",
+        hole=0.45,
+        title="Gender Distribution"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+    st.markdown("---")
+
+st.subheader("🎂 Age Distribution")
+
+fig = px.histogram(
+    filtered_df,
+    x="Age",
+    nbins=20,
+    color="Gender",
+    title="Employee Age Distribution"
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
